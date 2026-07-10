@@ -1,0 +1,7 @@
+{
+  "name": "booksmart-dashboard",
+  "type": "module",
+  "dependencies": {
+    "@neondatabase/serverless": "^1.0.0"
+  }
+}

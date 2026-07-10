@@ -1,0 +1,87 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Lead {
+  id        String           @id @default(cuid())
+  name      String
+  email     String           @unique
+  company   String?
+  phone     String?
+  notes     String?
+  source    String?
+  status    LeadStatus       @default(active)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  enrolled  SequenceEnrollment[]
+  events    EmailEvent[]
+}
+
+enum LeadStatus {
+  active
+  bounced
+  replied
+  unsubscribed
+  completed
+}
+
+model Sequence {
+  id        String             @id @default(cuid())
+  name      String
+  active    Boolean            @default(true)
+  createdAt DateTime           @default(now())
+  steps     SequenceStep[]
+  enrollments SequenceEnrollment[]
+}
+
+model SequenceStep {
+  id         String   @id @default(cuid())
+  sequenceId String
+  sequence   Sequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  stepOrder  Int
+  delayDays  Int
+  subject    String
+  body       String
+  createdAt  DateTime @default(now())
+
+  @@unique([sequenceId, stepOrder])
+}
+
+model SequenceEnrollment {
+  id         String     @id @default(cuid())
+  leadId     String
+  lead       Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  sequenceId String
+  sequence   Sequence   @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+  currentStep Int       @default(0)
+  nextSendAt DateTime?
+  completed  Boolean    @default(false)
+  createdAt  DateTime   @default(now())
+
+  @@unique([leadId, sequenceId])
+}
+
+model EmailEvent {
+  id        String    @id @default(cuid())
+  leadId    String
+  lead      Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  stepOrder Int
+  type      String    // sent, bounced, replied
+  to        String
+  subject   String
+  error     String?
+  createdAt DateTime  @default(now())
+}

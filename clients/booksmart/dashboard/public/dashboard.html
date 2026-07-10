@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BookSmart Dashboard</title>
+<style>
+  :root {
+    --bg: #f5f5f4;
+    --card: #ffffff;
+    --border: #e7e5e4;
+    --text: #292524;
+    --muted: #78716c;
+    --accent: #0891b2;
+    --green: #16a34a;
+    --red: #dc2626;
+    --amber: #d97706;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 24px 16px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card .label { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .card .value { font-size: 28px; font-weight: 700; }
+  .card .subvalue { font-size: 13px; color: var(--muted); margin-top: 2px; }
+  .status-badge {
+    display: inline-block;
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 500;
+  }
+  .badge-active { background: #dcfce7; color: #166534; }
+  .badge-bounced { background: #fce4ec; color: #c62828; }
+  .badge-replied { background: #dbeafe; color: #1e40af; }
+  .badge-unsubscribed { background: #fef3c7; color: #92400e; }
+  .badge-completed { background: #f3f4f6; color: #4b5563; }
+  .badge-sent { background: #dcfce7; color: #166534; }
+  .badge-error { background: #fce4ec; color: #c62828; }
+  h2 { font-size: 15px; font-weight: 600; margin-bottom: 12px; }
+  .activity-table { width: 100%; border-collapse: collapse; }
+  .activity-table th {
+    text-align: left;
+    font-size: 11px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .activity-table td {
+    font-size: 13px;
+    padding: 10px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .activity-table tr:hover td { background: #fafaf9; }
+  .time { color: var(--muted); font-size: 12px; white-space: nowrap; }
+  #refresh-btn {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    float: right;
+  }
+  #refresh-btn:hover { opacity: 0.9; }
+  #refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .error-banner {
+    background: #fce4ec;
+    color: #c62828;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 14px;
+    margin-bottom: 20px;
+    display: none;
+  }
+  .empty { color: var(--muted); font-size: 14px; padding: 20px 0; text-align: center; }
+  @media (max-width: 600px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .activity-table th:nth-child(3), .activity-table td:nth-child(3) { display: none; }
+  }
+</style>
+</head>
+<body>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+    <h1>BookSmart Dashboard</h1>
+    <button id="refresh-btn" onclick="load()">Refresh</button>
+  </div>
+  <div class="sub">Cold email outbound system &middot; <span id="last-updated">loading...</span></div>
+
+  <div class="error-banner" id="error-banner"></div>
+
+  <div class="grid" id="stats-grid">
+    <div class="card"><div class="label">Total Leads</div><div class="value" id="leads-total">-</div></div>
+    <div class="card"><div class="label">Active</div><div class="value" id="leads-active">-</div></div>
+    <div class="card"><div class="label">Bounced</div><div class="value" id="leads-bounced">-</div></div>
+    <div class="card"><div class="label">Replied</div><div class="value" id="leads-replied">-</div></div>
+    <div class="card"><div class="label">Emails Today</div><div class="value" id="emails-today">-</div></div>
+    <div class="card"><div class="label">Total Sent</div><div class="value" id="emails-total">-</div></div>
+    <div class="card"><div class="label">Enrolled</div><div class="value" id="enrolled-total">-</div></div>
+    <div class="card"><div class="label">In Progress</div><div class="value" id="enrolled-active">-</div></div>
+  </div>
+
+  <h2>Recent Activity</h2>
+  <table class="activity-table">
+    <thead><tr><th>Lead</th><th>Type</th><th>Subject</th><th>Time</th></tr></thead>
+    <tbody id="activity-body"></tbody>
+  </table>
+  <div class="empty" id="empty-msg" style="display:none;">No activity yet</div>
+
+  <script>
+    async function load() {
+      const btn = document.getElementById("refresh-btn");
+      btn.disabled = true;
+      btn.textContent = "Loading...";
+      document.getElementById("error-banner").style.display = "none";
+
+      try {
+        const [statsRes, recentRes] = await Promise.all([
+          fetch("/api/stats"),
+          fetch("/api/recent"),
+        ]);
+
+        if (!statsRes.ok) throw new Error("Stats: " + (await statsRes.text()));
+        if (!recentRes.ok) throw new Error("Recent: " + (await recentRes.text()));
+
+        const stats = await statsRes.json();
+        const recent = await recentRes.json();
+
+        renderStats(stats);
+        renderActivity(recent.events || []);
+
+        document.getElementById("last-updated").textContent = new Date().toLocaleString();
+      } catch (e) {
+        const banner = document.getElementById("error-banner");
+        banner.textContent = "Failed to load: " + e.message;
+        banner.style.display = "block";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Refresh";
+      }
+    }
+
+    function renderStats(s) {
+      const byStatus = s.leads.byStatus || {};
+      document.getElementById("leads-total").textContent = s.leads.total;
+      document.getElementById("leads-active").textContent = byStatus.active || 0;
+      document.getElementById("leads-bounced").textContent = byStatus.bounced || 0;
+      document.getElementById("leads-replied").textContent = byStatus.replied || 0;
+      document.getElementById("emails-today").textContent = s.emails.sentToday;
+      document.getElementById("emails-total").textContent = s.emails.totalSent;
+      document.getElementById("enrolled-total").textContent = s.enrollments.total;
+      document.getElementById("enrolled-active").textContent = s.enrollments.active;
+    }
+
+    function renderActivity(events) {
+      const tbody = document.getElementById("activity-body");
+      const empty = document.getElementById("empty-msg");
+
+      if (!events.length) {
+        tbody.innerHTML = "";
+        empty.style.display = "block";
+        return;
+      }
+      empty.style.display = "none";
+
+      tbody.innerHTML = events.map(e => {
+        const badgeClass = e.type === "sent" ? "badge-sent" : e.type === "bounced" ? "badge-bounced" : "badge-error";
+        const time = new Date(e.createdAt).toLocaleString();
+        return \`<tr>
+          <td>\${escape(e.lead_name)}<br><span style="font-size:11px;color:var(--muted)">\${escape(e.lead_email)}</span></td>
+          <td><span class="status-badge \${badgeClass}">\${e.type}</span></td>
+          <td style="color:var(--muted)">\${escape(e.subject || "")}</td>
+          <td class="time">\${time}</td>
+        </tr>\`;
+      }).join("");
+    }
+
+    function escape(s) {
+      if (!s) return "";
+      const d = document.createElement("div");
+      d.textContent = s;
+      return d.innerHTML;
+    }
+
+    load();
+  </script>
+</body>
+</html>
