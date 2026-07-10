@@ -1,0 +1,20 @@
+{
+  "name": "booksmart-trigger",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "trigger dev",
+    "deploy": "trigger deploy"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.6.0",
+    "@trigger.dev/sdk": "4.4.6",
+    "nodemailer": "^6.10.0",
+    "zod": "^3.24.3"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.3",
+    "@trigger.dev/build": "4.4.6"
+  }
+}

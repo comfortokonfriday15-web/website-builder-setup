@@ -1,5 +1,22 @@
 {
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "verify": "node scripts/verify-build.js",
+    "verify:headed": "node scripts/verify-build.js --headed"
+  },
   "dependencies": {
-    "framer-motion": "^12.40.0"
+    "@ai-sdk/openai": "^3.0.74",
+    "@trigger.dev/sdk": "4.4.6",
+    "@voltagent/core": "^2.8.0",
+    "@voltagent/logger": "^2.0.2",
+    "ai": "^6.0.209",
+    "playwright": "^1.61.1",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@trigger.dev/build": "4.4.6",
+    "trigger.dev": "4.4.6",
+    "typescript": "^5.7.3"
   }
 }
