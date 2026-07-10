@@ -1,0 +1,190 @@
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+::selection { background: #6366F1; color: #fff; }
+
+html { background: #08090B; }
+
+body {
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% -10%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 50% at 80% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 20% 80%, rgba(34, 197, 94, 0.03) 0%, transparent 50%),
+    #08090B;
+  color: #F5F7FA;
+  min-height: 100dvh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.flex { display: flex; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.flex-col { flex-direction: column; }
+.flex-1 { flex: 1; }
+.flex-wrap { flex-wrap: wrap; }
+.min-w-0 { min-width: 0; }
+.flex-shrink-0 { flex-shrink: 0; }
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.grid { display: grid; }
+.grid-cols-1 { grid-template-columns: repeat(1, 1fr); }
+.grid-cols-2 { grid-template-columns: repeat(2, 1fr); }
+
+.p-2 { padding: 8px; }
+.p-3 { padding: 12px; }
+.p-4 { padding: 16px; }
+.p-6 { padding: 24px; }
+.px-4 { padding-left: 16px; padding-right: 16px; }
+.py-1 { padding-top: 4px; padding-bottom: 4px; }
+.py-1\.5 { padding-top: 6px; padding-bottom: 6px; }
+.py-3 { padding-top: 12px; padding-bottom: 12px; }
+.py-6 { padding-top: 24px; padding-bottom: 24px; }
+.py-8 { padding-top: 32px; padding-bottom: 32px; }
+.mb-1 { margin-bottom: 4px; }
+.mb-3 { margin-bottom: 12px; }
+.mb-6 { margin-bottom: 24px; }
+.mb-8 { margin-bottom: 32px; }
+.mt-0\.5 { margin-top: 2px; }
+.mt-1 { margin-top: 4px; }
+.mt-2 { margin-top: 8px; }
+.mx-auto { margin-left: auto; margin-right: auto; }
+.-mt-0\.5 { margin-top: -2px; }
+
+.text-xs { font-size: 12px; }
+.text-sm { font-size: 14px; }
+.text-base { font-size: 16px; }
+.text-lg { font-size: 18px; }
+.text-xl { font-size: 20px; }
+.text-2xl { font-size: 24px; }
+.text-10 { font-size: 10px; }
+.font-medium { font-weight: 500; }
+.font-semibold { font-weight: 600; }
+.font-bold { font-weight: 700; }
+.leading-relaxed { line-height: 1.625; }
+.tracking-tight { letter-spacing: -0.025em; }
+.tracking-wide { letter-spacing: 0.025em; }
+.tracking-wider { letter-spacing: 0.05em; }
+.tracking-widest { letter-spacing: 0.1em; }
+.uppercase { text-transform: uppercase; }
+.text-center { text-align: center; }
+.font-mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+.text-primary { color: #F5F7FA; }
+.text-secondary { color: #A3AAB8; }
+.text-muted { color: #6B7280; }
+.text-danger { color: #EF4444; }
+
+.rounded-lg { border-radius: 8px; }
+.rounded-xl { border-radius: 12px; }
+.rounded-full { border-radius: 9999px; }
+.overflow-hidden { overflow: hidden; }
+.divide-y > * + * { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+
+.bg-dim { background: rgba(255, 255, 255, 0.06); }
+.bg-danger { background: rgba(239, 68, 68, 0.1); }
+
+.w-1 { width: 4px; }
+.w-2 { width: 6px; }
+.w-6 { width: 24px; }
+.w-9 { width: 36px; }
+.h-1 { height: 4px; }
+.h-2 { height: 6px; }
+.h-4 { height: 16px; }
+.h-full { height: 100%; }
+.inline-block { display: inline-block; }
+
+.glass {
+  background: rgba(15, 17, 21, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+.glass-hover:hover { border-color: rgba(255, 255, 255, 0.10); }
+
+.card-glow { position: relative; }
+.card-glow::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), transparent 40%, transparent 60%, rgba(34, 197, 94, 0.08));
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-glow:hover::before { opacity: 1; }
+
+.metric-value {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: -0.5px;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #F5F7FA 0%, #C8CFD8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.metric-value-sm {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  line-height: 1.1;
+  background: linear-gradient(135deg, #F5F7FA 0%, #C8CFD8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.accent-gradient {
+  background: linear-gradient(135deg, #818CF8 0%, #6366F1 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.success-gradient {
+  background: linear-gradient(135deg, #4ADE80 0%, #22C55E 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.pipeline-arrow {
+  color: #6B7280;
+  font-size: 12px;
+  line-height: 1;
+  opacity: 0.5;
+  text-align: center;
+  padding: 2px 0;
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.8; }
+}
+.animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
+
+.hover-bg:hover { background: rgba(255, 255, 255, 0.02); }
+.transition-colors { transition: color 0.2s, background-color 0.2s, border-color 0.2s; }
+.transition-shadow { transition: box-shadow 0.2s; }
+
+.shadow-lg { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3); }
+.shadow-accent { box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2); }
+.shadow-accent-lg { box-shadow: 0 4px 12px rgba(99, 102, 241, 0.25); }
+.hover-shadow-accent:hover { box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+
+.max-w-1280 { max-width: 1280px; }
+.min-w-130 { min-width: 130px; }
+.min-w-36 { min-width: 36px; }
+.border-danger { border: 1px solid rgba(239, 68, 68, 0.2); }
+.divide-muted > * + * { border-top: 1px solid rgba(255, 255, 255, 0.06); }
+
+.disabled-opacity:disabled { opacity: 0.4; cursor: not-allowed; }
+
+@media (min-width: 1024px) {
+  .lg-grid-cols-4 { grid-template-columns: repeat(4, 1fr); }
+  .lg-grid-cols-5 { grid-template-columns: repeat(5, 1fr); }
+  .lg-grid-cols-main { grid-template-columns: 1fr 320px; }
+}

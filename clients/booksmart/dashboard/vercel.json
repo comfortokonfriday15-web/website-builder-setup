@@ -1,12 +1,12 @@
 {
-  "buildCommand": "",
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
   "functions": {
     "api/**/*.ts": {
       "maxDuration": 10
     }
   },
   "rewrites": [
-    { "source": "/dashboard", "destination": "/dashboard.html" },
-    { "source": "/", "destination": "/dashboard.html" }
+    { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
