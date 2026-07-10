@@ -65,28 +65,12 @@ If timing isn't right, no worries at all. Just let me know and I won't follow up
 
 Best,
 Samuel`,
-              },
-              {
-                stepOrder: 3,
-                delayDays: 7,
-                subject: "Closing the loop, {{name}}",
-                body: `Hi {{name}},
-
-I'll keep this brief — this is my last email.
-
-If automating your repetitive tasks is on your radar, I'd be happy to show you what we've built. If not, no hard feelings.
-
-Either way, I wish you and {{company}} the best.
-
-Cheers,
-Samuel`,
-              },
             ],
           },
         },
       });
 
-      console.log(`Created sequence: "${sequence.name}" with 4 steps`);
+      console.log(`Created sequence: "${sequence.name}" with 3 steps`);
       return sequence;
     } finally {
       await prisma.$disconnect();
