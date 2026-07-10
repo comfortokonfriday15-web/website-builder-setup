@@ -19,7 +19,7 @@ function isPermanentBounce(err: any): boolean {
 
 export const processSequence = schedules.task({
   id: "process-sequence",
-  cron: "*/30 * * * *",
+  cron: "0 0 5 5 5",
   run: async () => {
     const prisma = new PrismaClient();
     try {
@@ -28,7 +28,7 @@ export const processSequence = schedules.task({
 
       const [{ count: sentToday }] = await prisma.$queryRaw<
         { count: bigint }[]
-      >`SELECT COUNT(*)::int AS count FROM "EmailEvent" WHERE type = 'sent' AND "createdAt" >= ${today}`;
+      >`SELECT COUNT(*)::int AS count FROM "EmailEvent" WHERE type = 'sent' AND "stepOrder" = 0 AND "createdAt" >= ${today}`;
 
       const remaining = DAILY_CAP - Number(sentToday);
       if (remaining <= 0) {
@@ -38,7 +38,7 @@ export const processSequence = schedules.task({
 
       console.log(`Sent today: ${Number(sentToday)}, remaining: ${remaining}`);
 
-      const enrollments = await prisma.sequenceEnrollment.findMany({
+      const allDue = await prisma.sequenceEnrollment.findMany({
         where: {
           completed: false,
           nextSendAt: { lte: new Date() },
@@ -49,10 +49,14 @@ export const processSequence = schedules.task({
             include: { steps: { orderBy: { stepOrder: "asc" } } },
           },
         },
-        take: remaining,
       });
 
-      console.log(`Found ${enrollments.length} enrollments due`);
+      const followUps = allDue.filter((e) => e.currentStep > 0);
+      const newLeads = allDue.filter((e) => e.currentStep === 0).slice(0, remaining);
+
+      const enrollments = [...followUps, ...newLeads];
+
+      console.log(`Found ${followUps.length} follow-ups + ${newLeads.length} new leads due`);
 
       let sent = 0;
       for (const enrollment of enrollments) {
