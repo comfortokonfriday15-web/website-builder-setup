@@ -2,6 +2,9 @@ import { schedules } from "@trigger.dev/sdk/v3";
 import { PrismaClient } from "@prisma/client";
 import { sendEmail, baseHtml } from "../lib/email.js";
 
+const DAILY_CAP = 30;
+const DELAY_BETWEEN_MS = 35000;
+
 function isPermanentBounce(err: any): boolean {
   const msg = (err?.message || "").toLowerCase();
   return (
@@ -16,11 +19,24 @@ function isPermanentBounce(err: any): boolean {
 
 export const processSequence = schedules.task({
   id: "process-sequence",
-  cron: "0 8 * * *",
+  cron: "*/30 * * * *",
   run: async () => {
     const prisma = new PrismaClient();
     try {
-      console.log("Processing sequence enrollments...");
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const [{ count: sentToday }] = await prisma.$queryRaw<
+        { count: bigint }[]
+      >`SELECT COUNT(*)::int AS count FROM "EmailEvent" WHERE type = 'sent' AND "createdAt" >= ${today}`;
+
+      const remaining = DAILY_CAP - Number(sentToday);
+      if (remaining <= 0) {
+        console.log(`Daily cap (${DAILY_CAP}) reached. Skipping.`);
+        return { skipped: true, sentToday: Number(sentToday), remaining: 0 };
+      }
+
+      console.log(`Sent today: ${Number(sentToday)}, remaining: ${remaining}`);
 
       const enrollments = await prisma.sequenceEnrollment.findMany({
         where: {
@@ -33,6 +49,7 @@ export const processSequence = schedules.task({
             include: { steps: { orderBy: { stepOrder: "asc" } } },
           },
         },
+        take: remaining,
       });
 
       console.log(`Found ${enrollments.length} enrollments due`);
@@ -42,7 +59,6 @@ export const processSequence = schedules.task({
         const step = enrollment.sequence.steps[enrollment.currentStep];
 
         if (!step) {
-          console.warn(`Enrollment ${enrollment.id} at step ${enrollment.currentStep} but sequence has no step — marking complete`);
           await prisma.sequenceEnrollment.update({
             where: { id: enrollment.id },
             data: { completed: true },
@@ -86,6 +102,10 @@ export const processSequence = schedules.task({
           });
 
           sent++;
+
+          if (sent >= remaining) break;
+
+          await new Promise((r) => setTimeout(r, DELAY_BETWEEN_MS));
         } catch (err: any) {
           console.error(`Failed to send to ${lead.email}:`, err.message);
 
@@ -114,8 +134,8 @@ export const processSequence = schedules.task({
         }
       }
 
-      console.log(`Sent ${sent} emails`);
-      return { processed: enrollments.length, sent };
+      console.log(`Sent ${sent} emails this run`);
+      return { processed: enrollments.length, sent, remaining: remaining - sent };
     } finally {
       await prisma.$disconnect();
     }
