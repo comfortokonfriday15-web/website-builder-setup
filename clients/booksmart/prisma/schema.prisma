@@ -23,19 +23,24 @@ model Lead {
   phone     String?
   notes     String?
   source    String?
-  status    LeadStatus       @default(active)
+    status    LeadStatus       @default(qualified)
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   enrolled  SequenceEnrollment[]
   events    EmailEvent[]
+  leadEvents LeadEvent[]
 }
 
 enum LeadStatus {
-  active
-  bounced
+  qualified
+  contacted
   replied
+  concept_requested
+  concept_delivered
+  call_booked
+  won
+  bounced
   unsubscribed
-  completed
 }
 
 model Sequence {
@@ -84,4 +89,14 @@ model EmailEvent {
   subject   String
   error     String?
   createdAt DateTime  @default(now())
+}
+
+model LeadEvent {
+  id        String   @id @default(cuid())
+  leadId    String
+  lead      Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  type      String   // concept-requested, concept-delivered, call-booked, testimonial, won
+  value     Float?
+  note      String?
+  createdAt DateTime @default(now())
 }
