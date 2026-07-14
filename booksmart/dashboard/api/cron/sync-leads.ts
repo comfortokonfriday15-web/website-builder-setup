@@ -1,86 +1,81 @@
-import type { VercelRequest, VercelResponse } from "@vercel/node";
 import { admin } from "../../src/lib/insforge.js";
 import { fetchLeadsFromSheet } from "../../src/lib/sheets.js";
+import { withRunLog } from "../../src/lib/withRunLog.js";
 
-export default async function handler(_req: VercelRequest, res: VercelResponse) {
-  try {
-    const leads = await fetchLeadsFromSheet();
+export default withRunLog("cron.sync-leads", async (_req, res) => {
+  const leads = await fetchLeadsFromSheet();
 
-    const { data: activeSeq } = await admin.database
-      .from("Sequence")
+  const { data: activeSeq } = await admin.database
+    .from("Sequence")
+    .select("id")
+    .eq("active", true)
+    .order("createdAt", { ascending: true })
+    .limit(1)
+    .maybeSingle();
+
+  let imported = 0;
+  for (const row of leads) {
+    if (!row.email) continue;
+
+    const { data: existingLead } = await admin.database
+      .from("Lead")
       .select("id")
-      .eq("active", true)
-      .order("createdAt", { ascending: true })
-      .limit(1)
+      .eq("email", row.email)
       .maybeSingle();
 
-    let imported = 0;
-    for (const row of leads) {
-      if (!row.email) continue;
-
-      const { data: existingLead } = await admin.database
+    let leadId: string;
+    if (existingLead) {
+      leadId = (existingLead as any).id;
+      await admin.database
         .from("Lead")
-        .select("id")
-        .eq("email", row.email)
-        .maybeSingle();
+        .update({
+          name: row.name,
+          company: row.company || null,
+          phone: row.phone || null,
+          notes: row.notes || null,
+          rating: row.rating || null,
+          reviewCount: row.reviewCount || null,
+          source: "google_sheets",
+        })
+        .eq("id", leadId);
+    } else {
+      const { data: newLead } = await admin.database
+        .from("Lead")
+        .insert([{
+          name: row.name,
+          email: row.email,
+          company: row.company || null,
+          phone: row.phone || null,
+          notes: row.notes || null,
+          rating: row.rating || null,
+          reviewCount: row.reviewCount || null,
+          source: "google_sheets",
+        }])
+        .select()
+        .single();
 
-      let leadId: string;
-      if (existingLead) {
-        leadId = (existingLead as any).id;
-        await admin.database
-          .from("Lead")
-          .update({
-            name: row.name,
-            company: row.company || null,
-            phone: row.phone || null,
-            notes: row.notes || null,
-            rating: row.rating || null,
-            reviewCount: row.reviewCount || null,
-            source: "google_sheets",
-          })
-          .eq("id", leadId);
-      } else {
-        const { data: newLead } = await admin.database
-          .from("Lead")
-          .insert([{
-            name: row.name,
-            email: row.email,
-            company: row.company || null,
-            phone: row.phone || null,
-            notes: row.notes || null,
-            rating: row.rating || null,
-            reviewCount: row.reviewCount || null,
-            source: "google_sheets",
-          }])
-          .select()
-          .single();
-
-        leadId = (newLead as any).id;
-      }
-
-      if (activeSeq) {
-        const seqId = (activeSeq as any).id;
-        const { data: existingEnroll } = await admin.database
-          .from("SequenceEnrollment")
-          .select("id")
-          .eq("leadId", leadId)
-          .eq("sequenceId", seqId)
-          .maybeSingle();
-
-        if (!existingEnroll) {
-          await admin.database
-            .from("SequenceEnrollment")
-            .insert([{ leadId, sequenceId: seqId, currentStep: 0 }]);
-          imported++;
-        }
-      } else {
-        imported++;
-      }
+      leadId = (newLead as any).id;
     }
 
-    res.status(200).json({ total: leads.length, imported });
-  } catch (err: any) {
-    console.error("sync-leads error:", err);
-    res.status(500).json({ error: err.message });
+    if (activeSeq) {
+      const seqId = (activeSeq as any).id;
+      const { data: existingEnroll } = await admin.database
+        .from("SequenceEnrollment")
+        .select("id")
+        .eq("leadId", leadId)
+        .eq("sequenceId", seqId)
+        .maybeSingle();
+
+      if (!existingEnroll) {
+        await admin.database
+          .from("SequenceEnrollment")
+          .insert([{ leadId, sequenceId: seqId, currentStep: 0 }]);
+        imported++;
+      }
+    } else {
+      imported++;
+    }
   }
-}
+
+  res.status(200).json({ total: leads.length, imported });
+});

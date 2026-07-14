@@ -7,6 +7,7 @@ import ActivityFeed from "./components/ActivityFeed";
 import TodayQueue from "./components/TodayQueue";
 import CampaignHealth from "./components/CampaignHealth";
 import TopNiche from "./components/TopNiche";
+import Runs from "./components/Runs";
 import type { StatsResponse, ActivityEvent } from "./types";
 
 function formatDollar(n: number) {
@@ -16,6 +17,7 @@ function formatDollar(n: number) {
 }
 
 export default function App() {
+  const [view, setView] = useState<"dashboard" | "runs">("dashboard");
   const [stats, setStats] = useState<StatsResponse | null>(null);
   const [activity, setActivity] = useState<ActivityEvent[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -42,7 +44,7 @@ export default function App() {
 
   return (
     <div className="max-w-1280 mx-auto p-6">
-      <Header onRefresh={load} loading={loading} />
+      <Header onRefresh={load} loading={loading} view={view} onViewChange={setView} />
 
       <AnimatePresence>
         {error && (
@@ -58,9 +60,20 @@ export default function App() {
       </AnimatePresence>
 
       <AnimatePresence mode="wait">
-        {stats && (
+        {view === "runs" && (
           <motion.div
-            key="content"
+            key="runs"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <Runs onNavigate={() => setView("dashboard")} />
+          </motion.div>
+        )}
+
+        {view === "dashboard" && stats && (
+          <motion.div
+            key="dashboard"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
