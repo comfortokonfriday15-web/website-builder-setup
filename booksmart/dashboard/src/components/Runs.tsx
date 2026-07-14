@@ -31,16 +31,6 @@ const TYPE_LABELS: Record<string, string> = {
   "webhook.missed-call": "Missed Call",
 };
 
-const TYPE_ABBREV: Record<string, string> = {
-  "cron.process-sequence": "Seq",
-  "cron.check-replies": "Replies",
-  "cron.sync-leads": "Sync",
-  "webhook.form": "Form",
-  "webhook.booking": "Book",
-  "webhook.payment": "Pay",
-  "webhook.missed-call": "Call",
-};
-
 function formatDuration(ms: number | null): string {
   if (ms == null) return "—";
   if (ms < 1000) return `${ms}ms`;
@@ -110,11 +100,7 @@ export default function Runs() {
     return true;
   });
 
-  const queueCounts = {
-    running: runs.filter((r) => r.status === "running").length,
-    queued: Math.max(0, Math.floor(runs.length * 0.1)),
-  };
-  const queueTotal = Math.max(queueCounts.running + queueCounts.queued, 1);
+  const queueTotal = Math.max(runs.length, 1);
 
   return (
     <div style={{ maxWidth: 1400, margin: "0 auto", padding: "0 32px" }}>
@@ -241,12 +227,12 @@ export default function Runs() {
       {/* ===== MAIN CONTENT: 70/30 ===== */}
       <div className="grid grid-cols-[1fr_340px] gap-6 mb-8">
 
-        {/* LEFT COLUMN — Execution Timeline */}
+        {/* LEFT COLUMN — Run History */}
         <div>
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-[13px] font-semibold text-[#F5F7FA] tracking-wide">Execution Timeline</h2>
+            <h2 className="text-[13px] font-semibold text-[#F5F7FA] tracking-wide">Run History</h2>
             <span className="text-[11px] text-[#A3AAB8] font-mono">
-              Latest {filtered.length} of {summary.total}
+              {filtered.length} of {summary.total}
             </span>
           </div>
 
@@ -272,68 +258,66 @@ export default function Runs() {
             </motion.div>
           )}
 
-          <div className="space-y-1">
+          {/* Compact Table Header */}
+          {filtered.length > 0 && (
+            <div className="flex items-center gap-3 px-4 py-2 mb-1 text-[11px] font-medium text-[#A3AAB8]/50 uppercase tracking-wider">
+              <span className="w-2.5" />
+              <span className="w-32">Workflow</span>
+              <span className="w-20">Run ID</span>
+              <span className="w-14">Duration</span>
+              <span className="flex-1">Status</span>
+              <span>Time</span>
+            </div>
+          )}
+
+          <div className="space-y-0.5">
             <AnimatePresence>
               {filtered.map((run, idx) => (
                 <motion.div
                   key={run.id}
-                  initial={{ opacity: 0, y: 6 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: idx * 0.008 }}
-                  className="group flex items-center gap-3 px-4 py-2.5 rounded-xl hover:bg-white/[0.03] transition-colors cursor-pointer border border-transparent hover:border-white/[0.06]"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: idx * 0.005 }}
+                  className="group flex items-center gap-3 px-4 py-2.5 rounded-lg hover:bg-white/[0.02] transition-colors"
                 >
-                  {/* Status dot */}
                   <div className="relative flex-shrink-0">
                     <div
-                      className="w-2.5 h-2.5 rounded-full"
+                      className="w-2 h-2 rounded-full"
                       style={{
                         backgroundColor:
                           run.status === "success" ? "#22C55E" :
                           run.status === "error" ? "#EF4444" : "#F59E0B",
                       }}
                     />
-                    {run.status === "running" && (
-                      <motion.div
-                        animate={{ scale: [1, 2, 1], opacity: [0.4, 0, 0.4] }}
-                        transition={{ repeat: Infinity, duration: 2 }}
-                        className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-amber-400"
-                      />
-                    )}
                   </div>
 
-                  {/* Workflow */}
-                  <span className="text-[13px] font-medium text-[#F5F7FA] w-32 truncate flex-shrink-0">
+                  <span className="text-[13px] text-[#F5F7FA] w-32 truncate flex-shrink-0">
                     {TYPE_LABELS[run.type] || run.type}
                   </span>
 
-                  {/* Run ID */}
-                  <span className="text-[11px] font-mono text-[#A3AAB8]/50 w-20 truncate flex-shrink-0">
+                  <span className="text-[11px] font-mono text-[#A3AAB8]/40 w-20 truncate flex-shrink-0">
                     {run.id?.substring(0, 8)}
                   </span>
 
-                  {/* Duration */}
-                  <span className="text-[12px] font-mono text-[#A3AAB8] w-14 flex-shrink-0 tabular-nums">
+                  <span className="text-[12px] font-mono text-[#A3AAB8]/60 w-14 flex-shrink-0 tabular-nums">
                     {formatDuration(run.duration)}
                   </span>
 
-                  {/* Time */}
-                  <span className="text-[12px] text-[#A3AAB8]/70 flex-shrink-0 tabular-nums">
+                  <div className="flex-1 min-w-0">
+                    {run.error ? (
+                      <span className="text-[12px] text-red-400 truncate block" title={run.error}>
+                        {run.error.substring(0, 40)}
+                      </span>
+                    ) : (
+                      <span className="text-[12px] text-[#A3AAB8]/60">
+                        {run.status === "success" ? "Completed" : "Processing..."}
+                      </span>
+                    )}
+                  </div>
+
+                  <span className="text-[11px] text-[#A3AAB8]/50 font-mono flex-shrink-0 tabular-nums">
                     {timeAgo(run.startedat)}
                   </span>
-
-                  {/* Spacer */}
-                  <div className="flex-1" />
-
-                  {/* Error / success indicator */}
-                  {run.error ? (
-                    <span className="text-[11px] text-red-400 truncate max-w-[160px]" title={run.error}>
-                      {run.error.substring(0, 30)}
-                    </span>
-                  ) : run.status === "success" ? (
-                    <span className="text-[11px] text-[#22C55E]/70">Completed</span>
-                  ) : (
-                    <span className="text-[11px] text-amber-400/70">Processing...</span>
-                  )}
                 </motion.div>
               ))}
             </AnimatePresence>
@@ -431,11 +415,11 @@ export default function Runs() {
               <div className="relative w-28 h-28">
                 <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
                   {(() => {
-                    const total = runs.length || 1;
+                    const t = runs.length || 1;
                     const slices = [
-                      { pct: byStatus.success / total, color: "#22C55E" },
-                      { pct: byStatus.failed / total, color: "#EF4444" },
-                      { pct: byStatus.running / total, color: "#F59E0B" },
+                      { pct: byStatus.success / t, color: "#22C55E" },
+                      { pct: byStatus.failed / t, color: "#EF4444" },
+                      { pct: byStatus.running / t, color: "#F59E0B" },
                     ];
                     let offset = 0;
                     return slices.map((s, i) => {
