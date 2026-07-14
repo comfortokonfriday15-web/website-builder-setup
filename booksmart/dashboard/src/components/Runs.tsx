@@ -39,7 +39,7 @@ const STATUS_COLORS = {
   running: { dot: "#F59E0B", bg: "rgba(245,158,11,0.08)", text: "#F59E0B", border: "rgba(245,158,11,0.15)" },
 };
 
-export default function Runs({ onNavigate }: { onNavigate: () => void }) {
+export default function Runs() {
   const [runs, setRuns] = useState<CronRun[]>([]);
   const [summary, setSummary] = useState({ total: 0, success: 0, error: 0, running: 0 });
   const [loading, setLoading] = useState(false);
@@ -130,25 +130,15 @@ export default function Runs({ onNavigate }: { onNavigate: () => void }) {
             <p className="text-[11px] text-muted font-medium">Real-time execution monitor</p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={onNavigate}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-muted hover:text-primary bg-glass hover:bg-white/5 transition-colors border border-white/5"
-          >
-            ← Dashboard
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.03 }}
-            whileTap={{ scale: 0.97 }}
-            onClick={load}
-            disabled={loading}
-            className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white bg-gradient-to-br from-cyan-500 to-cyan-600 shadow-lg shadow-cyan-500/20 disabled:opacity-40 transition-opacity"
-          >
-            {loading ? "..." : "Refresh"}
-          </motion.button>
-        </div>
+        <motion.button
+          whileHover={{ scale: 1.03 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={load}
+          disabled={loading}
+          className="px-3 py-1.5 rounded-lg text-[11px] font-medium text-white bg-gradient-to-br from-cyan-500 to-cyan-600 shadow-lg shadow-cyan-500/20 disabled:opacity-40 transition-opacity"
+        >
+          {loading ? "..." : "Refresh"}
+        </motion.button>
       </div>
 
       {/* Summary Cards */}

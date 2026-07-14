@@ -67,7 +67,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <Runs onNavigate={() => setView("dashboard")} />
+            <Runs />
           </motion.div>
         )}
 
