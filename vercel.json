@@ -1,3 +1,7 @@
 {
-  "rootDirectory": "booksmart/dashboard"
+  "projects": {
+    "dashboard": {
+      "rootDirectory": "booksmart/dashboard"
+    }
+  }
 }
