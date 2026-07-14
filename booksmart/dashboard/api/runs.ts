@@ -7,7 +7,7 @@ export default async function handler(_req: any, res: any) {
     const { data, error } = await admin.database
       .from("cronrun")
       .select("*")
-      .order("startedAt", { ascending: false })
+      .order("startedat", { ascending: false })
       .limit(limit);
 
     if (error) {

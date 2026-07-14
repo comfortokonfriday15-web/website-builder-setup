@@ -5,21 +5,21 @@ interface CronRun {
   id: string;
   type: string;
   status: "success" | "error" | "running";
-  startedAt: string;
-  finishedAt: string | null;
-  durationMs: number | null;
+  startedat: string;
+  finishedat: string | null;
+  duration: number | null;
   metadata: any;
   error: string | null;
 }
 
-type SortKey = "startedAt" | "type" | "status" | "durationMs";
+type SortKey = "startedat" | "type" | "status" | "duration";
 
 export default function Runs({ onNavigate }: { onNavigate: () => void }) {
   const [runs, setRuns] = useState<CronRun[]>([]);
   const [summary, setSummary] = useState({ total: 0, success: 0, error: 0, running: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [sortKey, setSortKey] = useState<SortKey>("startedAt");
+  const [sortKey, setSortKey] = useState<SortKey>("startedat");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [filterType, setFilterType] = useState<string>("all");
   const [filterStatus, setFilterStatus] = useState<string>("all");
@@ -61,10 +61,10 @@ export default function Runs({ onNavigate }: { onNavigate: () => void }) {
 
   const sorted = [...filtered].sort((a, b) => {
     let cmp = 0;
-    if (sortKey === "startedAt") cmp = a.startedAt.localeCompare(b.startedAt);
+    if (sortKey === "startedat") cmp = a.startedat.localeCompare(b.startedat);
     else if (sortKey === "type") cmp = a.type.localeCompare(b.type);
     else if (sortKey === "status") cmp = a.status.localeCompare(b.status);
-    else if (sortKey === "durationMs") cmp = (a.durationMs ?? 0) - (b.durationMs ?? 0);
+    else if (sortKey === "duration") cmp = (a.duration ?? 0) - (b.duration ?? 0);
     return sortDir === "asc" ? cmp : -cmp;
   });
 
@@ -167,13 +167,13 @@ export default function Runs({ onNavigate }: { onNavigate: () => void }) {
           <table className="w-full text-xs">
             <thead>
               <tr className="border-b border-glass-border">
-                {(["type", "status", "startedAt", "durationMs"] as SortKey[]).map((key) => (
+                {(["type", "status", "startedat", "duration"] as SortKey[]).map((key) => (
                   <th
                     key={key}
                     className="text-left px-3 py-2 text-muted font-semibold uppercase tracking-wider cursor-pointer hover:text-primary transition-colors"
                     onClick={() => toggleSort(key)}
                   >
-                    {key === "startedAt" ? "Started" : key === "durationMs" ? "Duration" : key}
+                    {key === "startedat" ? "Started" : key === "duration" ? "Duration" : key}
                     {sortKey === key && <span className="ml-1">{sortDir === "asc" ? "↑" : "↓"}</span>}
                   </th>
                 ))}
@@ -216,10 +216,10 @@ export default function Runs({ onNavigate }: { onNavigate: () => void }) {
                       </span>
                     </td>
                     <td className="px-3 py-2 text-muted whitespace-nowrap font-mono">
-                      {new Date(run.startedAt).toLocaleString()}
+                      {new Date(run.startedat).toLocaleString()}
                     </td>
                     <td className="px-3 py-2 text-muted whitespace-nowrap font-mono">
-                      {run.durationMs != null ? `${(run.durationMs / 1000).toFixed(1)}s` : "—"}
+                      {run.duration != null ? `${(run.duration / 1000).toFixed(1)}s` : "—"}
                     </td>
                     <td className="px-3 py-2 text-muted max-w-[300px] truncate">
                       {run.error && (
