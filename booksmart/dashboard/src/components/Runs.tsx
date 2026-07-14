@@ -402,66 +402,48 @@ export default function Runs() {
             </div>
           </motion.div>
 
-          {/* Execution Distribution */}
+          {/* Recent Executions */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="rounded-xl border border-white/[0.06] p-5"
+            className="rounded-xl border border-white/[0.06] overflow-hidden"
             style={{ background: "#0F1115" }}
           >
-            <h3 className="text-[11px] font-semibold text-[#A3AAB8] uppercase tracking-wide mb-4">Distribution</h3>
-            <div className="flex items-center justify-center mb-4">
-              <div className="relative w-28 h-28">
-                <svg className="w-full h-full -rotate-90" viewBox="0 0 36 36">
-                  {(() => {
-                    const t = runs.length || 1;
-                    const slices = [
-                      { pct: byStatus.success / t, color: "#22C55E" },
-                      { pct: byStatus.failed / t, color: "#EF4444" },
-                      { pct: byStatus.running / t, color: "#F59E0B" },
-                    ];
-                    let offset = 0;
-                    return slices.map((s, i) => {
-                      const circumference = 2 * Math.PI * 13;
-                      const dash = s.pct * circumference;
-                      const gap = circumference - dash;
-                      const el = (
-                        <circle
-                          key={i}
-                          cx="18"
-                          cy="18"
-                          r="13"
-                          fill="none"
-                          stroke={s.color}
-                          strokeWidth="3"
-                          strokeDasharray={`${dash} ${gap}`}
-                          strokeDashoffset={-offset}
-                          opacity={s.pct > 0 ? 1 : 0}
-                        />
-                      );
-                      offset += dash;
-                      return el;
-                    });
-                  })()}
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-lg font-bold text-[#F5F7FA]">{summary.successRate}%</span>
-                </div>
-              </div>
+            <div className="px-5 py-3.5 border-b border-white/[0.06]">
+              <h3 className="text-[11px] font-semibold text-[#A3AAB8] uppercase tracking-wide">Recent Executions</h3>
             </div>
-            <div className="space-y-1.5">
-              {[
-                { label: "Success", count: byStatus.success, color: "#22C55E" },
-                { label: "Failed", count: byStatus.failed, color: "#EF4444" },
-                { label: "Running", count: byStatus.running, color: "#F59E0B" },
-              ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 text-[12px]">
-                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: item.color }} />
-                  <span className="text-[#A3AAB8] flex-1">{item.label}</span>
-                  <span className="font-medium text-[#F5F7FA] tabular-nums">{item.count}</span>
+            <div className="divide-y divide-white/[0.04]">
+              {filtered.slice(0, 5).map((run) => (
+                <div key={run.id} className="flex items-center gap-3 px-5 py-2.5 hover:bg-white/[0.02] transition-colors">
+                  <div
+                    className="w-2 h-2 rounded-full flex-shrink-0"
+                    style={{
+                      backgroundColor:
+                        run.status === "success" ? "#22C55E" :
+                        run.status === "error" ? "#EF4444" : "#F59E0B",
+                    }}
+                  />
+                  <span className="text-[12px] font-medium text-[#F5F7FA] w-24 truncate flex-shrink-0">
+                    {TYPE_LABELS[run.type] || run.type}
+                  </span>
+                  <span className="text-[11px] font-mono text-[#A3AAB8]/40 w-14 truncate flex-shrink-0">
+                    {run.id?.substring(0, 6)}
+                  </span>
+                  <span className="text-[11px] font-mono text-[#A3AAB8]/60 flex-shrink-0 tabular-nums">
+                    {formatDuration(run.duration)}
+                  </span>
+                  <div className="flex-1" />
+                  <span className="text-[10px] text-[#A3AAB8]/50 font-mono flex-shrink-0">
+                    {timeAgo(run.startedat)}
+                  </span>
                 </div>
               ))}
+              {filtered.length === 0 && (
+                <div className="px-5 py-6 text-center">
+                  <p className="text-[12px] text-[#A3AAB8]">No recent executions</p>
+                </div>
+              )}
             </div>
           </motion.div>
         </div>
