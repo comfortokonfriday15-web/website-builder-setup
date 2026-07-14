@@ -1,5 +1,7 @@
-import { neon } from "@neondatabase/serverless";
 import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { admin } from "../src/lib/insforge.js";
+
+const VALID_TYPES = ["concept-requested", "concept-delivered", "call-booked", "testimonial", "won"];
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== "POST") {
@@ -13,24 +15,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: "leadId and type required" });
     }
 
-    const validTypes = ["concept-requested", "concept-delivered", "call-booked", "testimonial", "won"];
-    if (!validTypes.includes(type)) {
-      return res.status(400).json({ error: "invalid type: " + validTypes.join(", ") });
+    if (!VALID_TYPES.includes(type)) {
+      return res.status(400).json({ error: `invalid type. valid: ${VALID_TYPES.join(", ")}` });
     }
 
-    const sql = neon(process.env.DATABASE_URL!);
-
-    const result = await sql`
-      INSERT INTO "LeadEvent" ("leadId", "type", "note", "createdAt")
-      VALUES (${leadId}, ${type}, ${note || null}, NOW())
-      RETURNING id, "leadId", type, note, "createdAt"
-    `;
+    const { data: event } = await admin.database
+      .from("LeadEvent")
+      .insert([{ leadId, type, note: note || null }])
+      .select()
+      .single();
 
     if (type === "won") {
-      await sql`UPDATE "Lead" SET status = 'won' WHERE id = ${leadId}`;
+      await admin.database
+        .from("Lead")
+        .update({ status: "won" })
+        .eq("id", leadId);
     }
 
-    res.status(201).json({ event: result[0] });
+    res.status(201).json({ event });
   } catch (err: any) {
     console.error("Log event error:", err);
     res.status(500).json({ error: err.message });

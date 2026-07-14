@@ -6,6 +6,8 @@ interface LeadRow {
   company?: string;
   phone?: string;
   notes?: string;
+  rating?: number;
+  reviewCount?: number;
 }
 
 export async function fetchLeadsFromSheet(): Promise<LeadRow[]> {
@@ -29,16 +31,21 @@ export async function fetchLeadsFromSheet(): Promise<LeadRow[]> {
   const leads: LeadRow[] = [];
 
   for (const row of records) {
-    const name = (row.name || "").trim();
-    const email = (row.email || "").trim();
-    if (!name || !email) continue;
+    const bizName = (row["Business Name"] || row.name || "").trim();
+    const email = (row["Email"] || row.email || "").trim();
+    if (!bizName || !email) continue;
+
+    const rawRating = (row["Ratings"] || "").trim();
+    const rawReviewCount = (row["Reviews"] || row[""] || "").trim();
 
     leads.push({
-      name,
+      name: bizName,
       email,
-      company: (row.company || "").trim() || undefined,
+      company: bizName,
       phone: (row.phone || "").trim() || undefined,
       notes: (row.notes || "").trim() || undefined,
+      rating: rawRating ? parseFloat(rawRating) : undefined,
+      reviewCount: rawReviewCount ? parseInt(rawReviewCount, 10) : undefined,
     });
   }
 
