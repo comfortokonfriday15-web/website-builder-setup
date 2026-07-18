@@ -31,6 +31,7 @@ export default withRunLog("cron.process-sequence", async (_req, res) => {
     .from("EmailEvent")
     .select("id")
     .eq("type", "sent")
+    .eq("stepOrder", 0)
     .gte("createdAt", today.toISOString());
 
   const sentToday = (sentRows as any[] | null)?.length ?? 0;
