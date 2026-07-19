@@ -25,7 +25,7 @@ function getUTCHour(): number {
 
 function isInSession(): boolean {
   const h = getUTCHour();
-  return h >= 11 && h < 13; // 11-13 UTC = 6-8am EST
+  return h >= 22 || h < 0; // 22-00 UTC = 5-7pm EST
 }
 
 async function processOne(): Promise<{ sent: boolean; reason?: string; email?: string; step?: number; error?: string; bounced?: boolean }> {
@@ -37,7 +37,7 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
     .from("EmailEvent")
     .select("id")
     .eq("type", "sent")
-    .eq("stepOrder", 0)
+    .gte("stepOrder", 1)
     .gte("createdAt", today.toISOString());
 
   const sentToday = (sentRows as any[] | null)?.length ?? 0;
@@ -49,8 +49,9 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
     .from("SequenceEnrollment")
     .select("id, leadId, currentStep, sequenceId")
     .eq("completed", false)
-    .or("nextSendAt.lte." + now.toISOString() + ",nextSendAt.is.null")
-    .order("nextSendAt", { ascending: true, nullsFirst: true })
+    .gte("currentStep", 1)
+    .lte("nextSendAt", now.toISOString())
+    .order("nextSendAt", { ascending: true })
     .limit(1);
 
   if (!firstDue || (firstDue as any[]).length === 0) {
@@ -147,7 +148,7 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
     }]);
 
     sendNtfy({
-      title: `Email sent (step ${step.stepOrder})`,
+      title: `Follow-up sent (step ${step.stepOrder})`,
       message: `${TEST_EMAIL ? "[TEST] " : ""}${lead.name} <${lead.email}>`,
       priority: 3,
     });
@@ -195,7 +196,7 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
   }
 }
 
-export default withRunLog("cron.process-sequence", async (_req, res) => {
+export default withRunLog("cron.process-followups", async (_req, res) => {
   if (!isInSession() && !TEST_EMAIL) {
     res.status(200).json({ skipped: true, reason: "outside_session" });
     return;

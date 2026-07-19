@@ -31,17 +31,20 @@ export async function fetchLeadsFromSheet(): Promise<LeadRow[]> {
   const leads: LeadRow[] = [];
 
   for (const row of records) {
+    const firstName = (row["First Name"] || "").trim();
+    const lastName = (row["Last Name"] || "").trim();
+    const fullName = [firstName, lastName].filter(Boolean).join(" ");
     const bizName = (row["Business Name"] || row.name || "").trim();
-    const email = (row["Email"] || row.email || "").trim();
-    if (!bizName || !email) continue;
+    const email = (row["Email Address"] || row["Email"] || row.email || "").trim();
+    if (!fullName || !email) continue;
 
     const rawRating = (row["Ratings"] || "").trim();
     const rawReviewCount = (row["Reviews"] || row[""] || "").trim();
 
     leads.push({
-      name: bizName,
+      name: fullName,
       email,
-      company: bizName,
+      company: bizName || fullName,
       phone: (row.phone || "").trim() || undefined,
       notes: (row.notes || "").trim() || undefined,
       rating: rawRating ? parseFloat(rawRating) : undefined,
