@@ -114,7 +114,12 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
       .replace(/{{review_count}}/g, String(lead.reviewCount ?? ""))
       .replace(/{{rating}}/g, String(lead.rating ?? ""));
 
-  const html = baseHtml(resolveVars(step.body));
+  const baseUrl = process.env.VERCEL_URL
+    ? `https://${process.env.VERCEL_URL}`
+    : "https://dashboard-comfortokonfriday15-webs-projects.vercel.app";
+  const trackId = `${lead.id}:${step.stepOrder}`;
+  const trackingPixelUrl = `${baseUrl}/api/track/open?id=${encodeURIComponent(trackId)}`;
+  const html = baseHtml(resolveVars(step.body), trackingPixelUrl);
 
   const to = TEST_EMAIL || lead.email;
   const hasMx = TEST_EMAIL ? true : await hasMxRecord(to);

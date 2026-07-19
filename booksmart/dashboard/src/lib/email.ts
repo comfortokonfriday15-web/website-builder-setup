@@ -22,13 +22,17 @@ function textToHtml(text: string): string {
   return text.replace(/\n/g, "<br>");
 }
 
-export function baseHtml(body: string): string {
+export function baseHtml(body: string, trackingPixelUrl?: string): string {
   const content = textToHtml(body);
+  const pixel = trackingPixelUrl
+    ? `<img src="${trackingPixelUrl}" width="1" height="1" style="display:none" alt="" />`
+    : "";
   return `<!DOCTYPE html>
 <html>
   <head><meta charset="utf-8" /></head>
   <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size:14px; line-height:1.5; color:#222222; font-weight:normal;">
 ${content}
+${pixel}
   </body>
 </html>`;
 }
