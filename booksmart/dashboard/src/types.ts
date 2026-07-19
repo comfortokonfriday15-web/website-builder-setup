@@ -14,7 +14,7 @@ export interface StatsResponse {
   };
   pipeline: { id: string; label: string; count: number; conversion: number | null }[];
   todayQueue: { qualifiedReady: number; scheduledToday: number; remainingCapacity: number };
-  campaignHealth: { sentToday: number; opens: number; openRate: number; replyRate: number; bounceRate: number };
+  campaignHealth: { sentToday: number; opens: number; openRate: number; replyRate: number; bounceRate: number; openedLeads: { leadId: string; name: string; email: string; stepOrder: number; openedAt: string }[] };
   topNiche: { name: string; leads: number; replyRate: number; conceptRequests: number; callsBooked: number } | null;
   sequences: { id: string; name: string; active: boolean; steps: number; enrolled: number }[];
   leads: { total: number; byStatus: Record<string, number> };

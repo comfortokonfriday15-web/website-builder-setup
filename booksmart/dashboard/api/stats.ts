@@ -4,6 +4,7 @@ import { admin } from "../src/lib/insforge.js";
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
   try {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const thirtyDaysAgo = new Date(today.getTime() - 30 * 24 * 60 * 60 * 1000);
     const twentyNineDaysAgo = new Date(today.getTime() - 29 * 24 * 60 * 60 * 1000);
 
@@ -16,6 +17,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       { data: sequences },
       { data: leadEvents },
       { data: repliedRows },
+      { data: openedRows },
     ] = await Promise.all([
       admin.database.from("Lead").select("status"),
       admin.database.from("EmailEvent").select("id").eq("type", "sent").gte("createdAt", today.toISOString()),
@@ -25,6 +27,7 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
       admin.database.from("Sequence").select("id, name, active"),
       admin.database.from("LeadEvent").select("type, value"),
       admin.database.from("Lead").select("id").eq("status", "replied"),
+      admin.database.from("EmailEvent").select("id, leadId, stepOrder, createdAt").eq("type", "opened").order("createdAt", { ascending: false }),
     ]);
 
     const byStatus: Record<string, number> = {};
@@ -56,12 +59,40 @@ export default async function handler(_req: VercelRequest, res: VercelResponse) 
     const monthAgoRate = sentLastMonth > 0 ? (monthAgoReplies / sentLastMonth) * 100 : 0;
     const replyRateChange = monthAgoRate > 0 ? replyRate - monthAgoRate : 0;
 
+    const totalOpened = (openedRows ?? []).length;
+    const uniqueOpenedLeads = new Set((openedRows ?? []).map((e: any) => e.leadId));
+    const openRate = sentTotal > 0 ? Math.round((uniqueOpenedLeads.size / sentTotal) * 1000) / 10 : 0;
+
+    const openedLeadIds = [...uniqueOpenedLeads].slice(0, 20);
+    let openedLeadsMap = new Map<string, { name: string; email: string }>();
+    if (openedLeadIds.length > 0) {
+      const { data: openedLeadsRows } = await admin.database
+        .from("Lead")
+        .select("id, name, email")
+        .in("id", openedLeadIds);
+      for (const l of (openedLeadsRows ?? []) as { id: string; name: string; email: string }[]) {
+        openedLeadsMap.set(l.id, { name: l.name, email: l.email });
+      }
+    }
+
+    const openedLeads = (openedRows ?? []).slice(0, 20).map((e: any) => {
+      const lead = openedLeadsMap.get(e.leadId);
+      return {
+        leadId: e.leadId,
+        name: lead?.name ?? "Unknown",
+        email: lead?.email ?? "",
+        stepOrder: e.stepOrder ?? 0,
+        openedAt: e.createdAt,
+      };
+    });
+
     const campaignHealth = {
       sentToday,
-      opens: Math.round(sentToday * 0.48),
-      openRate: 48.0,
+      opens: totalOpened,
+      openRate,
       replyRate: Math.round(replyRate * 10) / 10,
       bounceRate: totalLeads > 0 ? Math.round(((byStatus.bounced || 0) / totalLeads) * 1000) / 10 : 0,
+      openedLeads,
     };
 
     const pipelineStages = [

@@ -17,6 +17,7 @@ const dotColors: Record<string, string> = {
   sent: "#22C55E",
   bounced: "#F59E0B",
   replied: "#6366F1",
+  opened: "#06B6D4",
 };
 
 function timeAgo(dateStr: string) {

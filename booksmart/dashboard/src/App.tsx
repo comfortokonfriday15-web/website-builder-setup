@@ -6,7 +6,7 @@ import Pipeline from "./components/Pipeline";
 import ActivityFeed from "./components/ActivityFeed";
 import TodayQueue from "./components/TodayQueue";
 import CampaignHealth from "./components/CampaignHealth";
-import TopNiche from "./components/TopNiche";
+import OpenedLeads from "./components/OpenedLeads";
 import Runs from "./components/Runs";
 import type { StatsResponse, ActivityEvent } from "./types";
 
@@ -192,9 +192,9 @@ export default function App() {
                 </div>
                 <div className="glass rounded-xl p-4">
                   <h3 className="text-xs font-semibold text-muted uppercase tracking-wider mb-3">
-                    Top Performing Niche
+                    Who Opened
                   </h3>
-                  <TopNiche niche={stats.topNiche} />
+                  <OpenedLeads leads={stats.campaignHealth.openedLeads} />
                 </div>
               </div>
             </div>
