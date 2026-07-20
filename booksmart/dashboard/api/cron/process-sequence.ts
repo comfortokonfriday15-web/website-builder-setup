@@ -11,11 +11,12 @@ const TEST_EMAIL = process.env.TEST_EMAIL;
 function isPermanentBounce(err: any): boolean {
   const msg = (err?.message || "").toLowerCase();
   return (
+    msg.includes("address") ||
+    msg.includes("mailbox") ||
+    msg.includes("recipient") ||
     msg.includes("user unknown") ||
     msg.includes("does not exist") ||
-    msg.includes("mailbox not found") ||
-    msg.includes("no such user") ||
-    msg.includes("invalid recipient")
+    msg.includes("invalid")
   );
 }
 
@@ -49,6 +50,7 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
     .from("SequenceEnrollment")
     .select("id, leadId, currentStep, sequenceId")
     .eq("completed", false)
+    .eq("currentStep", 0)
     .or("nextSendAt.lte." + now.toISOString() + ",nextSendAt.is.null")
     .order("nextSendAt", { ascending: true, nullsFirst: true })
     .limit(1);
@@ -101,10 +103,10 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
     return { sent: false, reason: "no_step_or_lead" };
   }
 
-  const firstName = lead.name?.split(" ")[0]?.trim() || "there";
+  const firstName = lead.name?.split(" ")[0] || "there";
   const resolveVars = (text: string) =>
     text
-      .replace(/{{name}}/g, lead.name || "")
+      .replace(/{{name}}/g, lead.name)
       .replace(/{{first_name}}/g, firstName)
       .replace(/{{firstname}}/g, firstName)
       .replace(/{{company}}/g, lead.company || "your company")
@@ -113,12 +115,7 @@ async function processOne(): Promise<{ sent: boolean; reason?: string; email?: s
       .replace(/{{review_count}}/g, String(lead.reviewCount ?? ""))
       .replace(/{{rating}}/g, String(lead.rating ?? ""));
 
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : "https://dashboard-comfortokonfriday15-webs-projects.vercel.app";
-  const trackId = `${lead.id}:${step.stepOrder}`;
-  const trackingPixelUrl = `${baseUrl}/api/track/open?id=${encodeURIComponent(trackId)}`;
-  const html = baseHtml(resolveVars(step.body), trackingPixelUrl);
+  const html = baseHtml(resolveVars(step.body));
 
   const to = TEST_EMAIL || lead.email;
   const hasMx = TEST_EMAIL ? true : await hasMxRecord(to);

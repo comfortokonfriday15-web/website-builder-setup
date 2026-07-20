@@ -6,3 +6,4 @@ dist
 .trigger
 __pycache__
 *.pyc
+.vercel
